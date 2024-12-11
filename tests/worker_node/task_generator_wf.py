@@ -1,3 +1,4 @@
+import argparse
 import os
 import sys
 import importlib
@@ -28,14 +29,25 @@ fhs_generator_funcs_path = os.path.join(
 )
 
 
-def simple_tasks_seq() -> None:
+def simple_tasks_seq(num_tasks: int = 5) -> None:
     """Simple task."""
     tool = Tool("test_tool")
     tool.set_default_compute_resources_from_dict(
-        cluster_name="sequential", compute_resources={"queue": "null.q"}
+        cluster_name="sequential",
+        compute_resources={
+            "queue": "null.q",
+            "num_cores": 1,
+            "memory": 1,
+            "runtime": 3600,
+        }
     )
     wf = tool.create_workflow()
-    compute_resources = {"queue": "null.q"}
+    compute_resources={
+        "queue": "null.q",
+        "num_cores": 1,
+        "memory": 1,
+        "runtime": 3600,
+    }
 
     # Import the task_generator_funcs.py module
     spec = importlib.util.spec_from_file_location(
@@ -44,7 +56,7 @@ def simple_tasks_seq() -> None:
     task_generator_funcs = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(task_generator_funcs)
     simple_function = task_generator_funcs.simple_function
-    for i in range(5):
+    for i in range(num_tasks):
         task = simple_function.create_task(
             cluster_name="sequential",
             compute_resources=compute_resources,
@@ -345,37 +357,65 @@ def fhs_slurmz_rsc():
     assert s == "D"
 
 
-def main():
-    if len(sys.argv) > 1:
-        try:
-            input_value = int(sys.argv[1])
-        except ValueError:
-            input_value = None
-    else:
-        input_value = None
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Run a task generator workflow.")
+    parser.add_argument(
+        "input_value",
+        type=int,
+        choices=range(1, 12),
+        help=""""
+            Choose a task to execute:
+                1: simple_tasks_seq
+                2: simple_tasks_slurm
+                3: simple_tasks_serializer_seq
+                4: simple_tasks_serializer_slurm
+                5: simple_tasks_array
+                6: simple_tasks_serializer_array
+                7: fhs_seq
+                8: fhs_slurm
+                9: special_char_tasks_serializer_seq
+                10: fhs_slurmz_rsc
+                11: simple_tasks_serializer_slurm_src 
+        """
+    )
+    parser.add_argument(
+        "--num-tasks",
+        type=int,
+        default=5,
+        help="Number of tasks (only applicable when input_value is 1)",
+    )
 
-    if input_value == 2:
+    return parser.parse_args()
+
+
+def main():
+    args = parse_arguments()
+
+    if args.input_value == 2:
         simple_tasks_slurm()
-    elif input_value == 3:
+    elif args.input_value == 3:
         simple_tasks_serializer_seq()
-    elif input_value == 4:
+    elif args.input_value == 4:
         simple_tasks_serializer_slurm()
-    elif input_value == 5:
+    elif args.input_value == 5:
         simple_tasks_array()
-    elif input_value == 6:
+    elif args.input_value == 6:
         simple_tasks_serializer_array()
-    elif input_value == 7:
+    elif args.input_value == 7:
         fhs_seq()
-    elif input_value == 8:
+    elif args.input_value == 8:
         fhs_slurm()
-    elif input_value == 9:
+    elif args.input_value == 9:
         special_char_tasks_serializer_seq()
-    elif input_value == 10:
+    elif args.input_value == 10:
         fhs_slurmz_rsc()
-    elif input_value == 11:
+    elif args.input_value == 11:
         simple_tasks_serializer_slurm_src()
     else:
-        simple_tasks_seq()
+        if args.num_tasks is not None and args.num_tasks <= 0:
+            print("Error --num-tasks must be a positive integer when provided.")
+            sys.exit(1)
+        simple_tasks_seq(args.num_tasks)
 
 
 if __name__ == "__main__":
