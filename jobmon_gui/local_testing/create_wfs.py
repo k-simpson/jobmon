@@ -121,7 +121,6 @@ def create_tired_wf():
         command_template="echo {arg}",
         node_args=["arg"]
     )
-    # get a randome number between 1 and 10
     num_tasks = random.randint(1, 10)
     tier1 = []
     for i in range(num_tasks):
