@@ -15,6 +15,7 @@ import {formatJobmonDate} from "@jobmon_gui/utils/DayTime.ts";
 
 type WorkflowHeaderProps = {
     wf_id: number | string
+    task_template_info: any[]
 }
 import IconButton from "@mui/material/IconButton";
 import {HtmlTooltip} from "@jobmon_gui/components/HtmlToolTip";
@@ -49,7 +50,7 @@ export default function WorkflowHeader({
         ...jobmonAxiosConfig,
         data: null,
     }).then((r) => {
-        setWfFieldValues(r.data.max_concurrently_running)
+        setWfFieldValues(r.data.max_concurrently_running) // TODO: ts error: Property 'max_concurrently_running' does not exist on type 'unknown'; TODO: server error: "GET /api/v3/workflow/22/get_array_max_concurrently_running/1 HTTP/1.1" 404 Not Found
     });
 
     const [showWFInfo, setShowWFInfo] = useState(false)
